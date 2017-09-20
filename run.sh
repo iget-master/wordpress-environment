@@ -11,7 +11,11 @@ DEFAULT_DOMAIN="docker.wordpress"
 
 # Prefix the docker-compose command with project setup options
 function docker-compose {
-    command docker-compose -p ${PROJECT_NAME} -f ${COMPOSE_FILE} ${@}
+    if grep -q Microsoft /proc/version; then
+      command docker-compose -H tcp://0.0.0.0:2375 -p ${PROJECT_NAME} -f ${COMPOSE_FILE} ${@}
+    else
+      command docker-compose -p ${PROJECT_NAME} -f ${COMPOSE_FILE} ${@}
+    fi
 }
 
 #######################
