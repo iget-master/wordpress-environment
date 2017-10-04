@@ -1,4 +1,4 @@
-# Wordpress base environment
+# Wordpress Environment
 
 ## Run command
 
@@ -25,3 +25,20 @@ Add the following lines to your hosts file
 127.0.0.1 docker.wordpress.phpmyadmin
 ```
 
+## Installing theme
+
+The `run` script provides a easy way to install a theme package from git.
+
+```
+$ run theme:install replace-by-git-url 
+``` 
+
+## Running on Windows
+
+There are a few pre-requisites to run this over Windows:
+
+- The Bash for Windows (aka WSL) should be installed
+- The docker should be installed on host machine (Windows) and TCP/IP should be enabled on docker (Settings -> General -> Expose daemon on tcp://localhost:2375 without TLS)
+- The docker-ce client should be installed on WSL
+- The `/mnt/c` should be mounted on `/c` using `sudo mount --bind /mnt/c /c` (need to find a way to add on fstab to be permanent), or create a symlink using `sudo ln -s /mnt/c /c` (permanent)
+- This repository should be on the following path `C:\wordpress-environment` in order to volumes work fine.

@@ -5,6 +5,10 @@ COMPOSE_FILE="${SCRIPT_PATH}/docker/docker-compose.yml"
 PROJECT_NAME="wordpress"
 DEFAULT_DOMAIN="docker.wordpress"
 
+if grep -q Microsoft /proc/version; then
+    COMPOSE_FILE="${SCRIPT_PATH}/docker/docker-compose-windows.yml"
+fi
+
 #######################
 # Helper Functions
 #######################
@@ -28,6 +32,18 @@ function command_exec {
     docker-compose exec --user ${UID} ${@}
 }
 
+# Command: bash
+# Open bash as current user
+function command_bash {
+    docker-compose exec --user ${UID} www /bin/bash
+}
+
+# Command: bash:root
+# Open bash as root
+function command_bash_root {
+    docker-compose exec www /bin/bash
+}
+
 # Command: up
 # Create and start project containers
 function command_up {
@@ -46,20 +62,33 @@ function command_install {
 echo -e "\e[33mCloning Wordpress git repo...\e[39m"
     git -C www status &> /dev/null
 
-    if [ $? -ne 0 ]
-    then
-        git clone git@github.com:WordPress/WordPress.git www &> /dev/null
-        echo -n -e "\e[32mRepo cloned,"
-    else
-        echo -n -e "\e[32mRepo already exists,"
-    fi
+    case $? in
+        0)
+            echo -n -e "\e[32mRepo already exists,"
+            ;;
+        128)
+            echo -e "\e[32mCloning repo..."
+            git clone git@github.com:WordPress/WordPress.git www > /dev/null
+            if [ $? -eq 0 ]
+                then
+                   echo -n -e "\e[32mRepo cloned,"
+                else
+                    echo -n -e "\e[31mRepo clone failed."
+                    exit 1;
+            fi
+            ;;
+        *)
+            echo "\e[31mFailed on git status..."
+            exit 1;
+            ;;
+    esac
 
     echo -e " checking out latest tag..."
 
     pushd www &> /dev/null
-    git fetch --tags &> /dev/null
-    latestTag=$(git describe --tags `git rev-list --tags --max-count=1`)
-    git checkout $latestTag &> /dev/null
+    git fetch --tags > /dev/null
+    latestTag=$(git tag | sort -V | tail -1)
+    git checkout $latestTag > /dev/null
     echo -e "\e[32mChecked out tag $latestTag."
     popd &> /dev/null
 

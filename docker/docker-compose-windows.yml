@@ -19,7 +19,7 @@ services:
     build: images/www
     image: wordpress-www
     volumes:
-      - ./www:/var/www/
+      - /c/wordpress-environment/www:/var/www/
     ports:
       - "8888:80"
 
