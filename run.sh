@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-COMPOSE_FILE="${SCRIPT_PATH}/docker/docker-compose.yml"
+COMPOSE_FILE="${SCRIPT_PATH}/docker-compose.yml"
 PROJECT_NAME="wordpress"
 DEFAULT_DOMAIN="docker.wordpress"
 
@@ -19,7 +19,7 @@ case "$(uname)" in
 esac
 
 if [ "$OS" == 'WSL' ]; then
-    COMPOSE_FILE="${SCRIPT_PATH}/docker/docker-compose-windows.yml"
+    COMPOSE_FILE="${SCRIPT_PATH}/docker-compose-windows.yml"
 fi
 
 #######################
@@ -73,24 +73,11 @@ function command_down {
 # Command: bind
 # Bind hostname to container IP
 function command_bind {
-    ARG_DOMAIN=${DEFAULT_DOMAIN}
-
-    while getopts ":d:" opt; do
-        case ${opt} in
-            d)
-                ARG_DOMAIN=$OPTARG
-                ;;
-            \?)
-                echo "Invalid option: -$OPTARG" >&2
-                exit 1
-            ;;
-            \:)
-                echo "Missing arguments to option: -$OPTARG" >&2
-                exit 1
-            ;;
-        esac
-    done
-    shift $(($OPTIND - 1))
+    if [ -n $1 ]; then
+        ARG_DOMAIN=$1
+    else
+        ARG_DOMAIN=${DEFAULT_DOMAIN}
+    fi
 
     echo "The sudo password may be asked to allow writing to hosts file."
     sudo echo -n
@@ -156,14 +143,26 @@ echo -e "\x1B[33mCloning Wordpress git repo...\x1B[39m"
     fi
 }
 
-function command_theme_install {
-    echo -e "\x1B[32mCloning theme from $1...\x1B[39m"
-    git clone $1 www/wp-content/themes/theme
+# Command: install:theme
+# Install a theme from git and npm dependencies
+function command_install_theme {
+    NAME="theme"
+
+    echo -e "\x1B[32mCloning theme from \"$1\" as \"$2\"...\x1B[39m"
+    git clone $1 "www/wp-content/themes/${NAME}"
     command_exec www npm --prefix /var/www/wp-content/themes/theme/ install
 }
 
+# Command: theme:npm
+# Alias to `npm` inside www container on theme directory
+function command_theme_npm {
+    command_exec www npm --prefix /var/www/wp-content/themes/theme/ ${@}
+}
+
+# Command: theme:run
+# Alias to `npm run` inside www container
 function command_theme_run {
-    command_exec www npm --prefix /var/www/wp-content/themes/theme/ run ${@}
+    command_theme_npm run ${@}
 }
 
 # Command: help
@@ -173,13 +172,15 @@ function command_help {
     \x1B[39m$(basename "$0") [command] [options]
 
 \x1B[33mCommands:
-    \x1B[32mup                  \x1B[39mCreate and start project containers
-    \x1B[32mdown                \x1B[39mStop and remove project containers
-    \x1B[32mbind [-d=domain]    \x1B[39mBind domain to www container
-    \x1B[32mexec                \x1B[39mRun 'docker-compose exec' as current user on given container
-    \x1B[32minstall             \x1B[39mInstall latest Wordpress from git
-    \x1B[32mtheme:install [url] \x1B[39mInstall wordpress theme repository
-    \x1B[32mtheme:run           \x1B[39mRun theme npm commands"
+    \x1B[32mup                         \x1B[39mCreate and start project containers
+    \x1B[32mdown                       \x1B[39mStop and remove project containers
+    \x1B[32mbash                       \x1B[39mSSH into the www container
+    \x1B[32mbind [-d=domain]           \x1B[39mBind domain to www container
+    \x1B[32mexec                       \x1B[39mRun 'docker-compose exec' as current user on given container
+    \x1B[32minstall                    \x1B[39mInstall latest Wordpress from git
+    \x1B[32minstall:theme [url] [name] \x1B[39mInstall wordpress theme repository
+    \x1B[32mtheme:npm [command]        \x1B[39mRun npm inside theme directory
+    \x1B[32mtheme:run [command]        \x1B[39mAlias to 'theme:npm run'"
 }
 
 #########################

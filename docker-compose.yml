@@ -21,7 +21,19 @@ services:
       - ./www:/var/www/
     ports:
       - "8888:80"
-
+  phpmyadmin:
+    depends_on:
+      - mysql
+    restart: always
+    links:
+      - mysql
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: wordpress
+      PMA_PASSWORD: wordpress
+    ports:
+      - "8889:80"
 volumes:
   mysql_data:
     driver: local
