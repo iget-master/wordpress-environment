@@ -102,9 +102,9 @@ function command_bind {
 # Command: install
 # Install dependencies to www application
 function command_install {
-echo -e "\x1B[33mCloning Wordpress git repo...\x1B[39m"
-    git -C www status &> /dev/null
+    echo -e "\x1B[33mCloning Wordpress git repo...\x1B[39m"
 
+    command_exec -T www git -C /var/www status &> /dev/null
     case $? in
         0)
             echo -n -e "\x1B[32mRepo already exists,"
