@@ -59,26 +59,26 @@ function command_down {
 # Command: install
 # Install dependencies to www application
 function command_install {
-echo -e "\e[33mCloning Wordpress git repo...\e[39m"
+echo -e "\x1B[33mCloning Wordpress git repo...\x1B[39m"
     git -C www status &> /dev/null
 
     case $? in
         0)
-            echo -n -e "\e[32mRepo already exists,"
+            echo -n -e "\x1B[32mRepo already exists,"
             ;;
         128)
-            echo -e "\e[32mCloning repo..."
+            echo -e "\x1B[32mCloning repo..."
             git clone git@github.com:WordPress/WordPress.git www > /dev/null
             if [ $? -eq 0 ]
                 then
-                   echo -n -e "\e[32mRepo cloned,"
+                   echo -n -e "\x1B[32mRepo cloned,"
                 else
-                    echo -n -e "\e[31mRepo clone failed."
+                    echo -n -e "\x1B[31mRepo clone failed."
                     exit 1;
             fi
             ;;
         *)
-            echo "\e[31mFailed on git status..."
+            echo "\x1B[31mFailed on git status..."
             exit 1;
             ;;
     esac
@@ -89,19 +89,19 @@ echo -e "\e[33mCloning Wordpress git repo...\e[39m"
     git fetch --tags > /dev/null
     latestTag=$(git tag | sort -V | tail -1)
     git checkout $latestTag > /dev/null
-    echo -e "\e[32mChecked out tag $latestTag."
+    echo -e "\x1B[32mChecked out tag $latestTag."
     popd &> /dev/null
 
     # If wp-config.php does not exist on www path
     if [ ! -f www/wp-config.php ]; then
         # Copy our sample wp-config.php to www path
         cp ${SCRIPT_PATH}/wp-config-sample.php ${SCRIPT_PATH}/www/wp-config.php
-        echo -e "\e[32mMissing wp-config.php, using sample file."
+        echo -e "\x1B[32mMissing wp-config.php, using sample file."
     fi
 }
 
 function command_theme_install {
-    echo -e "\e[32mCloning theme from $1...\e[39m"
+    echo -e "\x1B[32mCloning theme from $1...\x1B[39m"
     git clone $1 www/wp-content/themes/theme
     command_exec www npm --prefix /var/www/wp-content/themes/theme/ install
 }
@@ -113,16 +113,16 @@ function command_theme_run {
 # Command: help
 # Print a help message with usage and available commands
 function command_help {
-    echo -e "\e[33mUsage:
-    \e[39m$(basename "$0") [command] [options]
+    echo -e "\x1B[33mUsage:
+    \x1B[39m$(basename "$0") [command] [options]
 
-\e[33mCommands:
-    \e[32mup                  \e[39mCreate and start project containers
-    \e[32mdown                \e[39mStop and remove project containers
-    \e[32mexec                \e[39mRun 'docker-compose exec' as current user on given container
-    \e[32minstall             \e[39mInstall latest Wordpress from git
-    \e[32mtheme:install [url] \e[39mInstall wordpress theme repository
-    \e[32mtheme:run           \e[39mRun theme npm commands"
+\x1B[33mCommands:
+    \x1B[32mup                  \x1B[39mCreate and start project containers
+    \x1B[32mdown                \x1B[39mStop and remove project containers
+    \x1B[32mexec                \x1B[39mRun 'docker-compose exec' as current user on given container
+    \x1B[32minstall             \x1B[39mInstall latest Wordpress from git
+    \x1B[32mtheme:install [url] \x1B[39mInstall wordpress theme repository
+    \x1B[32mtheme:run           \x1B[39mRun theme npm commands"
 }
 
 #########################
