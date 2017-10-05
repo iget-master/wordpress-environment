@@ -5,7 +5,20 @@ COMPOSE_FILE="${SCRIPT_PATH}/docker/docker-compose.yml"
 PROJECT_NAME="wordpress"
 DEFAULT_DOMAIN="docker.wordpress"
 
-if grep -q Microsoft /proc/version; then
+case "$(uname)" in
+    Darwin)
+        OS="OSX"
+        ;;
+    *)
+        if grep -q Microsoft /proc/version; then
+            OS="WSL"
+        else
+            OS="LINUX"
+        fi
+        ;;
+esac
+
+if [ "$OS" == 'WSL' ]; then
     COMPOSE_FILE="${SCRIPT_PATH}/docker/docker-compose-windows.yml"
 fi
 
@@ -15,10 +28,10 @@ fi
 
 # Prefix the docker-compose command with project setup options
 function docker-compose {
-    if grep -q Microsoft /proc/version; then
-      command docker-compose -H tcp://0.0.0.0:2375 -p ${PROJECT_NAME} -f ${COMPOSE_FILE} ${@}
+    if [ "$OS" == 'WSL' ]; then
+        command docker-compose -H tcp://0.0.0.0:2375 -p ${PROJECT_NAME} -f "${COMPOSE_FILE}" ${@}
     else
-      command docker-compose -p ${PROJECT_NAME} -f ${COMPOSE_FILE} ${@}
+        command docker-compose -p ${PROJECT_NAME} -f "${COMPOSE_FILE}" ${@}
     fi
 }
 
@@ -95,7 +108,7 @@ echo -e "\x1B[33mCloning Wordpress git repo...\x1B[39m"
     # If wp-config.php does not exist on www path
     if [ ! -f www/wp-config.php ]; then
         # Copy our sample wp-config.php to www path
-        cp ${SCRIPT_PATH}/wp-config-sample.php ${SCRIPT_PATH}/www/wp-config.php
+        cp "${SCRIPT_PATH}/wp-config-sample.php" "${SCRIPT_PATH}/www/wp-config.php"
         echo -e "\x1B[32mMissing wp-config.php, using sample file."
     fi
 }
