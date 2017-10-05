@@ -16,8 +16,7 @@ services:
     restart: always
     links:
       - mysql
-    build: images/www
-    image: wordpress-www
+    image: iget/default-www
     volumes:
       - /c/wordpress-environment/www:/var/www/
     ports:
