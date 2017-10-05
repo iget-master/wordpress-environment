@@ -69,6 +69,49 @@ function command_up {
 function command_down {
     docker-compose down ${@}
 }
+
+# Command: bind
+# Bind hostname to container IP
+function command_bind {
+    ARG_DOMAIN=${DEFAULT_DOMAIN}
+
+    while getopts ":d:" opt; do
+        case ${opt} in
+            d)
+                ARG_DOMAIN=$OPTARG
+                ;;
+            \?)
+                echo "Invalid option: -$OPTARG" >&2
+                exit 1
+            ;;
+            \:)
+                echo "Missing arguments to option: -$OPTARG" >&2
+                exit 1
+            ;;
+        esac
+    done
+    shift $(($OPTIND - 1))
+
+    echo "The sudo password may be asked to allow writing to hosts file."
+    sudo echo -n
+
+    if [ $? != 0 ]; then
+        echo "You must provide a valid sudo password to run this command."
+        exit 1
+    fi
+
+    # Remove any existing entry for HOST on /etc/hosts
+    # and point HOST to our www service IP
+    sudo sed -i'' -e '/\s'"${ARG_DOMAIN}"'$/d' /etc/hosts
+    echo "127.0.0.1 ${ARG_DOMAIN}" | sudo tee -a /etc/hosts
+    echo "Hostname \"${ARG_DOMAIN}\" bound to container."
+
+    if [ "$(uname)" == "Darwin" ]; then
+        echo "OS X detected. Flushing DNS Cache and restarting mDNSResponder"
+        dscacheutil -flushcache; sudo killall -HUP mDNSResponder
+    fi
+}
+
 # Command: install
 # Install dependencies to www application
 function command_install {
@@ -132,6 +175,7 @@ function command_help {
 \x1B[33mCommands:
     \x1B[32mup                  \x1B[39mCreate and start project containers
     \x1B[32mdown                \x1B[39mStop and remove project containers
+    \x1B[32mbind [-d=domain]    \x1B[39mBind domain to www container
     \x1B[32mexec                \x1B[39mRun 'docker-compose exec' as current user on given container
     \x1B[32minstall             \x1B[39mInstall latest Wordpress from git
     \x1B[32mtheme:install [url] \x1B[39mInstall wordpress theme repository
