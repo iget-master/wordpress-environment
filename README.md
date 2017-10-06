@@ -40,6 +40,22 @@ On following examples we used an alias `run`, that you can setup by adding the f
 alias run='./run.sh'
 ```
 
+#### `run up`
+
+The `up` command will bring up all service containers. It accepts all parameters accepted by `docker-compose up`
+
+#### `run down`
+
+The `down` command will shutdown all service containers. It accepts all parameters accepted by `docker-compose down`.
+
+A common parameter that you might need is `-v` that will remove all attached volumes. This is necessary when you want
+a fresh install.
+
+#### `run pull`
+
+The `pull` command will update all container images to latest version available.
+It accepts all parameters accepted by `docker-compose pul`
+
 #### `run bind [-d=domain]`
 
 The `bind` command will add a entry on `/etc/hosts` for Linux and Mac host machines pointing to localhost.

@@ -1,9 +1,30 @@
 #!/bin/bash
 
-SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-COMPOSE_FILE="${SCRIPT_PATH}/docker-compose.yml"
-PROJECT_NAME="wordpress"
-DEFAULT_DOMAIN="docker.wordpress"
+#########################
+# Bash colors variables
+#########################
+
+RESTORE='\033[0m'
+
+RED='\033[00;31m'
+GREEN='\033[00;32m'
+YELLOW='\033[00;33m'
+BLUE='\033[00;34m'
+PURPLE='\033[00;35m'
+CYAN='\033[00;36m'
+LIGHTGRAY='\033[00;37m'
+
+LRED='\033[01;31m'
+LGREEN='\033[01;32m'
+LYELLOW='\033[01;33m'
+LBLUE='\033[01;34m'
+LPURPLE='\033[01;35m'
+LCYAN='\033[01;36m'
+WHITE='\033[01;37m'
+
+#########################
+# Check current OS
+#########################
 
 case "$(uname)" in
     Darwin)
@@ -17,6 +38,15 @@ case "$(uname)" in
         fi
         ;;
 esac
+
+#########################
+# Script variables
+#########################
+
+SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+COMPOSE_FILE="${SCRIPT_PATH}/docker-compose.yml"
+PROJECT_NAME="wordpress"
+DEFAULT_DOMAIN="docker.wordpress"
 
 if [ "$OS" == 'WSL' ]; then
     COMPOSE_FILE="${SCRIPT_PATH}/docker-compose-windows.yml"
@@ -70,6 +100,12 @@ function command_down {
     docker-compose down ${@}
 }
 
+# Command: pull
+# Pull latest container images
+function command_pull {
+    docker-compose pull ${@}
+}
+
 # Command: bind
 # Bind hostname to container IP
 function command_bind {
@@ -102,26 +138,26 @@ function command_bind {
 # Command: install
 # Install dependencies to www application
 function command_install {
-    echo -e "\x1B[33mCloning Wordpress git repo...\x1B[39m"
+    echo -e "${YELLOW}Cloning Wordpress git repo...${RESTORE}"
 
     command_exec -T www git -C /var/www status &> /dev/null
     case $? in
         0)
-            echo -n -e "\x1B[32mRepo already exists,"
+            echo -n -e "${GREEN}Repo already exists,"
             ;;
         128)
-            echo -e "\x1B[32mCloning repo..."
+            echo -e "${GREEN}Cloning repo..."
             git clone git@github.com:WordPress/WordPress.git www > /dev/null
             if [ $? -eq 0 ]
                 then
-                   echo -n -e "\x1B[32mRepo cloned,"
+                   echo -n -e "${GREEN}Repo cloned,"
                 else
-                    echo -n -e "\x1B[31mRepo clone failed."
+                    echo -n -e "${RED}Repo clone failed."
                     exit 1;
             fi
             ;;
         *)
-            echo "\x1B[31mFailed on git status..."
+            echo "${RED}Failed on git status..."
             exit 1;
             ;;
     esac
@@ -132,14 +168,14 @@ function command_install {
     git fetch --tags > /dev/null
     latestTag=$(git tag | sort -V | tail -1)
     git checkout $latestTag > /dev/null
-    echo -e "\x1B[32mChecked out tag $latestTag."
+    echo -e "${GREEN}Checked out tag $latestTag."
     popd &> /dev/null
 
     # If wp-config.php does not exist on www path
     if [ ! -f www/wp-config.php ]; then
         # Copy our sample wp-config.php to www path
         cp "${SCRIPT_PATH}/wp-config-sample.php" "${SCRIPT_PATH}/www/wp-config.php"
-        echo -e "\x1B[32mMissing wp-config.php, using sample file."
+        echo -e "${GREEN}Missing wp-config.php, using sample file."
     fi
 }
 
@@ -148,7 +184,7 @@ function command_install {
 function command_install_theme {
     NAME="theme"
 
-    echo -e "\x1B[32mCloning theme from \"$1\" as \"$2\"...\x1B[39m"
+    echo -e "${GREEN}Cloning theme from \"$1\" as \"$2\"...${RESTORE}"
     git clone $1 "www/wp-content/themes/${NAME}"
     command_exec www npm --prefix /var/www/wp-content/themes/theme/ install
 }
@@ -168,39 +204,43 @@ function command_theme_run {
 # Command: help
 # Print a help message with usage and available commands
 function command_help {
-    echo -e "\x1B[33mUsage:
-    \x1B[39m$(basename "$0") [command] [options]
+    echo -e "${YELLOW}Usage:
+    ${RESTORE}$(basename "$0") [command] [options]
 
-\x1B[33mCommands:
-    \x1B[32mup                         \x1B[39mCreate and start project containers
-    \x1B[32mdown                       \x1B[39mStop and remove project containers
-    \x1B[32mbash                       \x1B[39mSSH into the www container
-    \x1B[32mbind [-d=domain]           \x1B[39mBind domain to www container
-    \x1B[32mexec                       \x1B[39mRun 'docker-compose exec' as current user on given container
-    \x1B[32minstall                    \x1B[39mInstall latest Wordpress from git
-    \x1B[32minstall:theme [url] [name] \x1B[39mInstall wordpress theme repository
-    \x1B[32mtheme:npm [command]        \x1B[39mRun npm inside theme directory
-    \x1B[32mtheme:run [command]        \x1B[39mAlias to 'theme:npm run'"
+${YELLOW}Commands:
+    ${GREEN}up                         ${RESTORE}Create and start project containers
+    ${GREEN}down                       ${RESTORE}Stop and remove project containers
+    ${GREEN}pull                       ${RESTORE}Pull latest container image versions
+    ${GREEN}bash                       ${RESTORE}SSH into the www container
+    ${GREEN}bind [-d=domain]           ${RESTORE}Bind domain to www container
+    ${GREEN}exec                       ${RESTORE}Run 'docker-compose exec' as current user on given container
+    ${GREEN}install                    ${RESTORE}Install latest Wordpress from git
+    ${GREEN}install:theme [url] [name] ${RESTORE}Install wordpress theme repository
+    ${GREEN}theme:npm [command]        ${RESTORE}Run npm inside theme directory
+    ${GREEN}theme:run [command]        ${RESTORE}Alias to 'theme:npm run'"
 }
 
 #########################
 # Execution
 #########################
 
+# Replace ':' by '_' and check if command isn't empty if
+# command was not provided, show am error and help message.
 COMMAND=${1//:/_}
 if [ -z ${COMMAND} ]; then
-    echo "You must provide a command."
-    echo ""
+    echo -e "${RED}You must provide a command.\n"
     command_help
     exit 1
 fi
 
+# Check if the command exists, if doesn't
+# show an error and help message.
 if [ -n "$(type -t command_${COMMAND})" ]; then
     shift
     eval "command_${COMMAND} ${@}"
     exit $?
 else
-    echo "No such command: ${COMMAND}"
+    echo -e "${RED}No such command: ${COMMAND}"
     echo ""
     command_help
     exit 1
