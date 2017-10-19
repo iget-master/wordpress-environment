@@ -45,7 +45,7 @@ esac
 
 SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 COMPOSE_FILE="${SCRIPT_PATH}/docker-compose.yml"
-PROJECT_NAME="wordpress"
+PROJECT_NAME="$( cat ${SCRIPT_PATH}/.projectname)"
 DEFAULT_DOMAIN="docker.wordpress"
 
 if [ "$OS" == 'WSL' ]; then
@@ -104,6 +104,12 @@ function command_down {
 # Pull latest container images
 function command_pull {
     docker-compose pull ${@}
+}
+
+# Command: set:project
+# Set the project name
+function command_set_project {
+    echo ${@} > ${SCRIPT_PATH}/.projectname
 }
 
 # Command: bind
@@ -210,6 +216,7 @@ function command_help {
 ${YELLOW}Commands:
     ${GREEN}up                         ${RESTORE}Create and start project containers
     ${GREEN}down                       ${RESTORE}Stop and remove project containers
+    ${GREEN}set:project                ${RESTORE}Set project name on '.projectname'
     ${GREEN}pull                       ${RESTORE}Pull latest container image versions
     ${GREEN}bash                       ${RESTORE}SSH into the www container
     ${GREEN}bind [-d=domain]           ${RESTORE}Bind domain to www container
