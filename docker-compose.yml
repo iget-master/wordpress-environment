@@ -16,7 +16,7 @@ services:
     restart: always
     links:
       - mysql
-    image: iget/default-www
+    image: iget/default-www:apache
     volumes:
       - ./www:/var/www/
     ports:
