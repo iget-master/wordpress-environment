@@ -24,6 +24,7 @@ versions. Some php extensions may not be installed, requiring that you extend ou
 On first usage, all you need to do is:
 
 ```
+./run.sh set:project your-project-name
 ./run.sh up
 ```
 
